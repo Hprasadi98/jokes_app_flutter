@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'joke_service.dart'; // Import JokeService
+import 'joke_service.dart';
 
 void main() {
   runApp(MyApp());
@@ -21,33 +21,45 @@ class JokeApp extends StatefulWidget {
 }
 
 class _JokeAppState extends State<JokeApp> {
-  final JokeService _jokeService = JokeService(); // Initialize JokeService
-  List<String> jokes = []; // Store jokes as a list of strings
-  bool isLoading = false; // To handle loading state
+  final JokeService _jokeService = JokeService();
+  List<Map<String, String>> jokes = [];
+  bool isLoading = false;
 
   /// Function to fetch jokes using JokeService
   Future<void> fetchJokes() async {
     setState(() {
-      isLoading = true; // Show loading state
+      isLoading = true;
     });
     try {
-      final jokesRaw = await _jokeService.fetchJokesRaw(); // Fetch jokes
+      final jokesRaw = await _jokeService.fetchJokesRaw();
       setState(() {
-        jokes = jokesRaw.map<String>((joke) {
+        jokes = jokesRaw.map<Map<String, String>>((joke) {
           if (joke['type'] == 'single') {
-            return joke['joke']; // Single joke
+            return {
+              'title': '😂 Funny Joke',
+              'joke': joke['joke'],
+              'setup': '',
+              'delivery': '',
+            };
           } else {
-            return '${joke['setup']} - ${joke['delivery']}'; // Two-part joke
+            return {
+              'title': '🤣 Twopart Joke',
+              'joke': '',
+              'setup': joke['setup'],
+              'delivery': joke['delivery'],
+            };
           }
         }).toList();
       });
     } catch (e) {
       setState(() {
-        jokes = ['Error fetching jokes: $e'];
+        jokes = [
+          {'title': '⚠️ Error', 'joke': 'Error fetching jokes: $e', 'setup': '', 'delivery': ''}
+        ];
       });
     } finally {
       setState(() {
-        isLoading = false; // Hide loading state
+        isLoading = false;
       });
     }
   }
@@ -56,64 +68,68 @@ class _JokeAppState extends State<JokeApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Joke App'),
-        backgroundColor: Colors.green,
+        title: Text('Joke App', style: TextStyle(fontSize: 24)),
+        backgroundColor: Colors.deepPurple,
+        centerTitle: true,
       ),
       body: Container(
-        constraints: BoxConstraints.expand(),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.green.shade100, Colors.white],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            colors: [Colors.deepPurple.shade400, Colors.deepPurple.shade100],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Welcome and instruction section
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20.0),
               child: Column(
                 children: [
                   Text(
-                    "Welcome to the Joke App!",
+                    "Laugh Out Loud!",
                     style: TextStyle(
-                      fontSize: 24.0,
+                      fontSize: 28.0,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      color: Colors.white,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 10.0),
                   Text(
-                    "Click the button to fetch random jokes!",
+                    "Click below to fetch some jokes.",
                     style: TextStyle(
-                      fontSize: 16.0,
-                      color: Colors.green.shade700,
+                      fontSize: 18.0,
+                      color: Colors.white70,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
             ),
-            // Fetch jokes button
-            ElevatedButton(
-              onPressed: isLoading ? null : fetchJokes, // Disable button when loading
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+            ElevatedButton.icon(
+              onPressed: isLoading ? null : fetchJokes,
+              icon: Icon(Icons.refresh),
+              label: Text(
+                isLoading ? "Loading..." : "Get Jokes",
+                style: TextStyle(fontSize: 18.0),
               ),
-              child: Text(
-                isLoading ? "Fetching..." : "Fetch Jokes",
-                style: TextStyle(color: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.deepPurple,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
               ),
             ),
-            // Jokes or loading/error state
+            SizedBox(height: 20.0),
             Expanded(
               child: isLoading
                   ? Center(
-                child: CircularProgressIndicator(), // Show loader while fetching
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                ),
               )
                   : jokes.isEmpty
                   ? Center(
@@ -121,24 +137,68 @@ class _JokeAppState extends State<JokeApp> {
                   "No jokes fetched yet.",
                   style: TextStyle(
                     fontSize: 18.0,
-                    color: Colors.green.shade700,
+                    color: Colors.white70,
                   ),
                   textAlign: TextAlign.center,
                 ),
               )
                   : ListView.builder(
-                padding: EdgeInsets.all(10.0),
+                padding: EdgeInsets.all(16.0),
                 itemCount: jokes.length,
                 itemBuilder: (context, index) {
+                  final joke = jokes[index];
                   return Card(
-                    margin: EdgeInsets.symmetric(vertical: 10.0),
+                    margin: EdgeInsets.only(bottom: 16.0),
                     elevation: 5.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
                     child: Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: Text(
-                        jokes[index],
-                        style: TextStyle(fontSize: 16.0),
-                        textAlign: TextAlign.center,
+                      padding: EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            joke['title']!,
+                            style: TextStyle(
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          SizedBox(height: 10.0),
+                          if (joke['setup']!.isNotEmpty)
+                            Text(
+                              'Q: ${joke['setup']}',
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          if (joke['delivery']!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                'A: ${joke['delivery']}',
+                                style: TextStyle(
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ),
+                          if (joke['joke']!.isNotEmpty)
+                            Text(
+                              joke['joke']!,
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.black87,
+                              ),
+                              textAlign: TextAlign.left,
+                            ),
+                        ],
                       ),
                     ),
                   );
